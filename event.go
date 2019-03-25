@@ -8,19 +8,42 @@ import (
 
 type EventType string
 
-// TODO do we want this as interface ?
-type Event struct {
-	ID     string
-	Type   EventType
-	Time   time.Time
-	Data   []byte
-	Mapper string
+type Event interface {
+	EventAggregatorID() string
+	EventType() EventType
+	EventTime() time.Time
+	EventData() []byte
+	EventMapper() string
 }
 
-type Events []Event
+var _ Event = &BaseEvent{}
 
-func (e *Events) Append(event Event) {
-	*e = append(*e, event)
+type BaseEvent struct {
+	AggregatorID string
+	Type         EventType
+	Time         time.Time
+	Data         []byte
+	Mapper       string
+}
+
+func (e *BaseEvent) EventAggregatorID() string {
+	return e.AggregatorID
+}
+
+func (e *BaseEvent) EventType() EventType {
+	return e.Type
+}
+
+func (e *BaseEvent) EventTime() time.Time {
+	return e.Time
+}
+
+func (e *BaseEvent) EventData() []byte {
+	return e.Data
+}
+
+func (e *BaseEvent) EventMapper() string {
+	return e.Mapper
 }
 
 // Value - Implementation of valuer for database/sql
