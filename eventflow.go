@@ -11,7 +11,7 @@ type MemoryFlow struct {
 }
 
 func (b *MemoryFlow) Publish(event Event) error {
-	if aggregators, ok := b.aggregators[event.EventType()]; ok {
+	if aggregators, ok := b.aggregators[event.Type]; ok {
 		for aggregator := range aggregators {
 			if err := aggregator.Apply(event); err != nil {
 				return err
