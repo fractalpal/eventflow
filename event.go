@@ -1,69 +1,23 @@
 package eventflow
 
-import (
-	"database/sql/driver"
-	"errors"
-	"time"
-)
-
 type EventType string
 
-type Event interface {
-	EventAggregatorID() string
-	EventType() EventType
-	EventTime() time.Time
-	EventData() []byte
-	EventMapper() string
-}
-
-var _ Event = &BaseEvent{}
-
-type BaseEvent struct {
-	AggregatorID string
-	Type         EventType
-	Time         time.Time
-	Data         []byte
-	Mapper       string
-}
-
-func (e *BaseEvent) EventAggregatorID() string {
-	return e.AggregatorID
-}
-
-func (e *BaseEvent) EventType() EventType {
-	return e.Type
-}
-
-func (e *BaseEvent) EventTime() time.Time {
-	return e.Time
-}
-
-func (e *BaseEvent) EventData() []byte {
-	return e.Data
-}
-
-func (e *BaseEvent) EventMapper() string {
-	return e.Mapper
-}
-
-// Value - Implementation of valuer for database/sql
-func (e EventType) Value() (driver.Value, error) {
-	return string(e), nil
-}
-
-// Scan - Implement the database/sql scanner interface
-func (e *EventType) Scan(value interface{}) error {
-	// if value is nil, false
-	if value == nil {
-		return errors.New("scan value is nil")
-	}
-	if bv, err := driver.String.ConvertValue(value); err == nil {
-		if v, ok := bv.(string); ok {
-			// set the value of the pointer yne to YesNoEnum(v)
-			*e = EventType(v)
-			return nil
-		}
-	}
-	// otherwise, return an error
-	return errors.New("failed to scan EventType")
+// Event contains serialized state of particular event that happened
+// it is applied by aggregator to evaluate to current state (after this event)
+type Event struct {
+	// primary identifier for aggregate, like "SomeAggregate" or narrowed "<userId>:SomeAggregate"
+	// should be indexed
+	RowID string
+	// additional columns for aggregate, should be used for segregation/grouping
+	// Example: "entity_name" => "foo", "other_id" => "abcd123"
+	// should be indexed because most queries would sort/group on them
+	Columns map[string]interface{}
+	// type of the event, used by aggregators on subscribe
+	Type EventType
+	// should be indexed because most queries would sort by timestamp
+	Timestamp int64
+	// serialized event payload
+	Data []byte
+	// serializer/mapper used to encode data
+	Mapper string
 }
